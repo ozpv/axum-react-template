@@ -25,15 +25,17 @@ struct Env {
     dist_dir: PathBuf,
 }
 
-async fn env_or_default() -> Env {
-    let site_addr = std::env::var("SITE_ADDR").unwrap_or("127.0.0.1:3000".to_string());
-    let dist_dir = std::env::var("DIST_DIR")
-        .unwrap_or(format!("{}/../frontend/dist", env!("CARGO_MANIFEST_DIR")))
-        .into();
+impl Env {
+    fn get_or_default() -> Self {
+        let site_addr = std::env::var("SITE_ADDR").unwrap_or_else(|_| "127.0.0.1:3000".to_string());
+        let dist_dir = std::env::var("DIST_DIR")
+            .unwrap_or_else(|_| format!("{}/../frontend/dist", env!("CARGO_MANIFEST_DIR")))
+            .into();
 
-    Env {
-        site_addr,
-        dist_dir,
+        Self {
+            site_addr,
+            dist_dir,
+        }
     }
 }
 
@@ -43,21 +45,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_max_level(tracing::Level::DEBUG)
         .init();
 
-    let env = env_or_default().await;
+    let Env {
+        site_addr,
+        dist_dir,
+    } = Env::get_or_default();
 
     let router = Router::new()
         // testing route
         .route("/test", get(hello_from_axum))
         // serve the frontend statically
-        .fallback_service(ServeDir::new(&env.dist_dir).not_found_service(not_found.into_service()))
+        .fallback_service(ServeDir::new(&dist_dir).not_found_service(not_found.into_service()))
         .layer(CompressionLayer::new().gzip(true))
         .layer(TimeoutLayer::new(Duration::from_secs(30)))
         .layer(TraceLayer::new_for_http());
 
-    let listener = TcpListener::bind(&env.site_addr).await?;
+    let listener = TcpListener::bind(&site_addr).await?;
 
-    tracing::info!("Listening on {}", &env.site_addr);
-    tracing::info!("Serving files in {}", env.dist_dir.display());
+    tracing::info!("Listening on http://{site_addr}/");
+    tracing::info!("Serving files in {}", dist_dir.display());
     axum::serve(listener, router).await?;
     Ok(())
 }
