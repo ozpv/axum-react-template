@@ -2,7 +2,11 @@
 
 pkgs.mkShell {
   packages = with pkgs; [
-	rustup
+	rustc
+	cargo
+	clippy
+	rustfmt
+	lld
     cargo-binutils
     cargo-watch
     postgresql
