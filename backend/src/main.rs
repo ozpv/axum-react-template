@@ -12,14 +12,6 @@ use tower_http::{
     compression::CompressionLayer, services::ServeDir, timeout::TimeoutLayer, trace::TraceLayer,
 };
 
-async fn not_found() -> impl IntoResponse {
-    Html("<h1>404 Not Found</h1>")
-}
-
-async fn hello_from_axum() -> impl IntoResponse {
-    (StatusCode::OK, "Working")
-}
-
 struct Env {
     site_addr: String,
     dist_dir: PathBuf,
@@ -39,6 +31,10 @@ impl Env {
     }
 }
 
+async fn not_found() -> impl IntoResponse {
+    (StatusCode::NOT_FOUND, Html("<h1>404 Not Found</h1>"))
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
@@ -51,8 +47,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } = Env::get_or_default();
 
     let router = Router::new()
-        // testing route
-        .route("/test", get(hello_from_axum))
+        // test api
+        .route("/api/test", get(|| async { "hello from axum" }))
         // serve the frontend statically
         .fallback_service(ServeDir::new(&dist_dir).not_found_service(not_found.into_service()))
         .layer(CompressionLayer::new().gzip(true))
