@@ -1,12 +1,20 @@
 use axum::{
-    extract::{Request, State}, handler::HandlerWithoutStateExt, http::StatusCode, response::{Html, IntoResponse}, routing::get, Router
+    extract::{Request, State},
+    handler::HandlerWithoutStateExt,
+    http::StatusCode,
+    response::{Html, IntoResponse},
+    routing::get,
+    Router,
 };
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::net::TcpListener;
 use tower::util::ServiceExt;
 use tower_http::{
-    compression::CompressionLayer, services::{ServeDir, ServeFile}, timeout::TimeoutLayer, trace::TraceLayer,
+    compression::CompressionLayer,
+    services::{ServeDir, ServeFile},
+    timeout::TimeoutLayer,
+    trace::TraceLayer,
 };
 
 use backend::state::AppState;
